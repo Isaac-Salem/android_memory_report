@@ -1,0 +1,24 @@
+#! /bin/bash
+
+# set -x
+if [ -n "${VIRTUAL_ENV}" ]; then
+	echo "Already IN_TV_WORKON_VENV."
+	return 1
+else
+
+	python_venv=".python_adv_venv"
+	#  check if python venv folder does not exists
+	if ! [ -d $python_venv ]; then
+		echo "creating venv in $python_venv"
+		python3.10 -m venv $python_venv
+		echo "activating venv. run \`deactivate\` to exit."
+		source $python_venv/bin/activate
+		echo "installing required python packages from requirements.txt"
+		pip install -r requirements.txt
+	else
+		echo "activating venv. run \`deactivate\` to exit."
+		source "$python_venv/bin/activate"
+    fi
+fi
+
+# set +x
