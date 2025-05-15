@@ -274,16 +274,27 @@ class memory_info:
 
         # Prepare report output
         report_output = []
+        prior_top_count = 0
         for top_count in self.top:
-            report_section = [
-                f"\nTop {top_count} Processes by {metric.upper()}:",
-                f"{'PID':<10}{'Memory (kB)':<15}{'% Total Mem':<15}{'Command'}"
-            ]
-            report_section.append("-" * 60)
 
-            sum_memory_consumed = 0
+            # for the first round of reporting, create the header for the report section
+            if prior_top_count == 0:
 
-            for proc in processes[:top_count]:
+                report_section = [
+                    f"\nTop {top_count} Processes by {metric.upper()}:",
+                    f"{'PID':<10}{'Memory (kB)':<15}{'% Total Mem':<15}{'Command'}"
+                ]
+                report_section.append("-" * 60)
+
+                sum_memory_consumed = 0
+            else:
+                # leave sum_memory_consumed as it is, since it contains the running total so far
+                # remove the last 3 summary lines from the previous report section
+                report_section = report_section[:-3]
+                # replace the first line of the report with the new top count
+                report_section[0] = f"\nTop {top_count} Processes by {metric.upper()}:"
+
+            for proc in processes[prior_top_count:top_count]:
                 memory_value = proc.get(metric, 0)
                 sum_memory_consumed = sum_memory_consumed + memory_value
                 memory_percent = (memory_value / self.system_memory['total']) * 100
@@ -300,6 +311,7 @@ class memory_info:
 
             # Add to report output for potential file saving
             report_output.extend(report_section)
+            prior_top_count = top_count
 
         # Save report to file if filename is provided
         if self.output_file:
