@@ -1,11 +1,9 @@
 #!/Users/fsalem/bin/python3
 
 import adbutils
-import subprocess
 import sys
 import os
 import argparse
-import adbutils.errors
 import pandas as pd
 import re
 from typing import List, Dict, Tuple, Optional, Union
@@ -22,12 +20,11 @@ logging.basicConfig(
     filename= 'ps_parsing.log'
 )
 
-
 class memory_info:
     def __init__(self, device_to_connect: Optional[str]=None,
                         output_file: Optional[str]=None,
                         verbose: bool=False,
-                        top: Union[List[int], List[str], None]=None):
+                        top: Union[List[int], None]=None):
 
         self.adb = adbutils.AdbClient()
         self.adb_device = self.__get_device(device_to_connect)
@@ -48,7 +45,6 @@ class memory_info:
             try:
                 print(self.adb.connect(device_serial))
                 specified_device = self.adb.device(serial=device_serial)
-            # except adbutils.errors.AdbConnectionError as e:
             except Exception as e:
                 print(f"Error connecting to device {device_serial}. Exception: {e}")
                 sys.exit(1)
@@ -67,10 +63,8 @@ class memory_info:
 
     def __parse_top(self, top: Union[List[int], List[str], None]) -> List[int]:
         t = [10, 20]
-        # print("top:", top)
         if isinstance(top[0], str):
             t = [int(x.strip()) for x in top]
-            # t = top
         elif isinstance(top[0], int):
             t = top
         else:
@@ -103,18 +97,7 @@ class memory_info:
         logger = logging.getLogger(__name__)
 
         try:
-            # result = subprocess.run(['adb', 'shell', command],
-            #                         capture_output=True,
-            #                         text=True,
-            #                         check=True)
-            # result = subprocess.run(['adb.exe', 'shell', command],
-            #                         capture_output=True,
-            #                         text=True,
-            #                         check=True)
-            # return result.stdout
-
             return self.adb_device.shell(command)
-        # except subprocess.CalledProcessError as e:
         except Exception as e:
             error_str=f"Error running ADB command: {command},\n Exception: {e}"
             logger.error(error_str)
@@ -168,9 +151,10 @@ class memory_info:
             ps_output_filename = f"{self.output_file}.ps.txt"
             self.save_output_to_file(ps_output, ps_output_filename)
 
-        # list of tuples of interest in this format
-        #  ===>  2259 0 [jbd2/mmcblk0p22]
-        #  Each list item in processes will have this format---->  {'pid': '2259', 'rss': 0, 'cmdline': '[jbd2/mmcblk0p22]'}
+        # list of tuples of interest in this format:
+        #     2259 0 [jbd2/mmcblk0p22]
+        #  Each list item in processes will have this format:
+        #     {'pid': '2259', 'rss': 0, 'cmdline': '[jbd2/mmcblk0p22]'}
         processes = []
 
         # Create list to store parsed data
@@ -207,7 +191,6 @@ class memory_info:
             shr = self.parse_memory_value(row['SHR'])
             net = rss - shr
 
-    #        print(f"rss {rss} shr_str {shr_str} shr {shr} net {net}")
 
             process = {
                 'pid': row['PID'],
@@ -217,7 +200,6 @@ class memory_info:
                 'cmdline': row['CMDLINE']
                 }
             processes.append(process)
-    #    exit()
 
         return processes
 
@@ -346,10 +328,6 @@ class memory_info:
         print(tabulate(data, headers=headers, floatfmt=".2f", tablefmt="github"))
 
         self.report_top_processes()
-
-    #    print(f"{'Memory Type':<20} {'KB':>10} {'MB':>10} {'% of total':>12}")
-    #    for row in data:
-    #        print(f"{row[0]:<20} {row[1]:>10} {row[2]:>10.2f} {row[3]:>12.2f}")
 
 def main():
     """Main function to run the script with argument parsing."""
