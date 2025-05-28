@@ -2,7 +2,7 @@
 
 # set -x
 if [ -n "${VIRTUAL_ENV}" ]; then
-	echo "Already IN_TV_WORKON_VENV."
+	echo "Already a python VIRTUAL_ENV."
 	return 1
 else
 
