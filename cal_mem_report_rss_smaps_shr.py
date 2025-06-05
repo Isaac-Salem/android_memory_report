@@ -49,8 +49,10 @@ class memory_info:
                 print(f"Error connecting to device {device_serial}. Exception: {e}")
                 sys.exit(1)
         elif len(self.adb.device_list()) > 1:
-            print("Multiple devices connected. Please specify a device with -d.")
-            sys.exit(1)
+            # print("Multiple devices connected. Please specify a device with -d.")
+            # sys.exit(1)
+            print("Multiple devices connected. Using the first device in the list.")
+            specified_device = self.adb.device_list()[0]
         elif len(self.adb.device_list()) == 0:
             print("No devices connected. Please connect a device first or specify one with -d.")
             sys.exit(1)
@@ -63,7 +65,9 @@ class memory_info:
 
     def __parse_top(self, top: Union[List[int], List[str], None]) -> List[int]:
         t = [10, 20]
-        if isinstance(top[0], str):
+        if not top:
+            pass
+        elif isinstance(top[0], str):
             t = [int(x.strip()) for x in top]
         elif isinstance(top[0], int):
             t = top
@@ -114,8 +118,7 @@ class memory_info:
 
     def calculate_total_avail_free_memory(self) -> Dict[str, int]:
         """Get total memory from /proc/meminfo."""
-        # meminfo = run_adb_shell_command("cat /proc/meminfo")
-        meminfo = self.adb_device.shell(r"cat /proc/meminfo")
+        meminfo = self.run_adb_shell_command("cat /proc/meminfo")
         if meminfo is None:
             print(f"Error in {self.get_total_avail_free.__name__} unable to obtain data from /proc/meminfo")
             sys.exit(1)
@@ -208,7 +211,7 @@ class memory_info:
         """Enhanced PS output parsing with detailed logging."""
         logger = logging.getLogger(__name__)
         try:
-            smaps_output = self.adb_device.shell(f"cat /proc/{pid}/smaps")
+            smaps_output = self.run_adb_shell_command(f"cat /proc/{pid}/smaps")
             if smaps_output is None:
                 error_str = f"Error in {self.get_pss_for_pid.__name__} unable to obtain data from /proc/{pid}/meminfo"
                 logger.error(error_str)
