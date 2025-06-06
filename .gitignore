@@ -1,6 +1,8 @@
 __pycache__/
 *.pyc
 *.log
+*.png
+*.jpg
 .venv/
 .python_adv_venv
 env/

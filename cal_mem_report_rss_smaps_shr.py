@@ -120,7 +120,7 @@ class memory_info:
         """Get total memory from /proc/meminfo."""
         meminfo = self.run_adb_shell_command("cat /proc/meminfo")
         if meminfo is None:
-            print(f"Error in {self.get_total_avail_free.__name__} unable to obtain data from /proc/meminfo")
+            print(f"Error in {self.calculate_total_avail_free_memory.__name__} unable to obtain data from /proc/meminfo")
             sys.exit(1)
 
         match1 = re.search(r'MemTotal:\s+(\d+)\s+kB', meminfo)
