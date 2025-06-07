@@ -1,0 +1,1 @@
+fsalem@5ce91ec15052 FH % adb -s G9V3660044920013 logcat | egrep -iE \(lmkd\|kill\|oom\)
