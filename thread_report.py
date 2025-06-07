@@ -91,10 +91,6 @@ def generate_report(analysis, top: List[int]):
     print(f"Kernel Threads: {analysis['kernel_threads']}")
     print(f"User Threads: {analysis['user_threads']}")
 
-    # Get default color cycle from Matplotlib for plotting later
-    default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-    color_cycle = itertools.cycle(default_colors)
-
     for x in top:
         # Prepare data for tabulation
         table_data = [
@@ -108,50 +104,97 @@ def generate_report(analysis, top: List[int]):
                     headers=['Thread Count', 'PID', 'Command Line'],
                     tablefmt='grid'))
 
-        labels = [table_data[i][2] for i in range(len(table_data))] + ['other']
         sizes =  [table_data[i][0] for i in range(len(table_data))]
+        labels = [table_data[i][2] for i in range(len(table_data))]
+
+        create_bar_graph_of_total_threads(labels, sizes, x, analysis['total_threads'])
 
         # add amount of remaining threads to graph in a blob
         sizes.append(analysis['total_threads'] - sum(sizes))
+        labels.append('other')
 
-        print("lables: ", labels)
-        print("sizes: ", sizes)
+        create_pie_graph_of_total_threads(labels, sizes, x)
 
-        plt.figure(figsize=(16, 12))  # size in inches
+def create_pie_graph_of_total_threads(labels: List[str],
+                                      values: List[int],
+                                      x: int):
 
-        #colors before
-        print("colors: ", default_colors)
-        # Graph default colors except last set to grey
-        # Get Matplotlib's default color cycle and repeat if needed
+    # Get default color cycle from Matplotlib for plotting later
+    default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    color_cycle = itertools.cycle(default_colors)
 
-        # Build color list: assign default colors to all except the last, which is grey
-        colors = [next(color_cycle) for _ in range(len(sizes) - 1)] + ['grey']
+    plt.figure(figsize=(16, 12))  # size in inches
 
-        # colors after
-        print("colors: ", colors)
+    # Build color list: assign default colors to all except the last, which is grey
+    colors = [next(color_cycle) for _ in range(len(values) - 1)] + ['grey']
 
-        # Create pie chart
-        plt.pie(sizes,
-                labels=labels,
-                autopct='%1.1f%%',
-                # radius=0.8,
-                colors=colors,
-                startangle=135,
-                labeldistance=1.50,  # move labels out
-                pctdistance=0.85,    # position % inside the pie
-                counterclock=False,
+    # Create pie chart
+    plt.pie(values,
+            labels=labels,
+            autopct='%1.1f%%',
+            # radius=0.8,
+            colors=colors,
+            startangle=135,
+            labeldistance=1.50,  # move labels out
+            pctdistance=0.85,    # position % inside the pie
+            counterclock=False,
+    )
+
+
+    plt.axis('equal')  # Equal aspect ratio to make it a circle
+
+    plt.tight_layout()
+
+    # Save to file
+    plt.savefig(f'pie_top_{x}_processes_by_thread_count.png')
+    plt.close()
+
+def create_bar_graph_of_total_threads(labels: List[str],
+                                      values: List[int],
+                                      x: int,
+                                      total_threads: int):
+
+
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    bars = ax.barh(range(len(labels)), values)
+
+    # Add process names inside the plot, to the right of the bars
+    for i, bar in enumerate(bars):
+        width = bar.get_width()
+        y_center = bar.get_y() + bar.get_height() / 2
+
+        # Thread count inside the bar (aligned right)
+        ax.text(width - 1,
+                y_center,
+                f'{int(width)}',
+                va='center',
+                ha='right',
+                color='white',
+                fontsize=9,
+                fontweight='bold',
         )
 
+        # Process name outside to the right of the bar
+        ax.text(width + 1,
+                y_center,
+                labels[i] + f" ({int(width)/total_threads:.2%})",
+                va='center',
+                ha='left',
+                fontsize=9
+        )
 
-        plt.axis('equal')  # Equal aspect ratio to make it a circle
+    # Hide the y-axis labels
+    ax.set_yticks([])
 
-        plt.tight_layout()
+    # Axis & title
+    ax.set_xlabel('Thread Count')
+    ax.set_title('Top Processes by Thread Count')
+    ax.invert_yaxis()  # Highest value at top
 
-        # Save to file
-        plt.savefig(f'top_{x}_processes_by_thread_count.png')
-
-        plt.close()  # Close the figure to free memory
-
+    plt.tight_layout()
+    plt.savefig(f'bar_top_{x}_processes_by_thread_count.png')
+    plt.close()
 
 
 def main():
